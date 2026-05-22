@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MindShelf — Your Second Brain</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+/* ── RESET ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0c0d10;
+  --surface: #13141a;
+  --surface2: #1a1c25;
+  --border: rgba(255,255,255,0.07);
+  --accent: #c8f06e;
+  --accent2: #6ef0c0;
+  --accent3: #f0c06e;
+  --text: #e8eaf0;
+  --muted: #6b7080;
+  --serif: 'Playfair Display', Georgia, serif;
+  --mono: 'DM Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --sidebar-w: 220px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 300;
+  overflow-x: hidden;
+}
+
+/* ── GRAIN OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* ══════════════════════════════════════════
+   SCREENS
+══════════════════════════════════════════ */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ══════════════════════════════════════════
+   LANDING — NAV
+══════════════════════════════════════════ */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: rgba(12,13,16,0.88);
+  backdrop-filter: blur(16px);
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-family: var(--serif); font-size: 1.25rem; font-weight: 700;
+  letter-spacing: -0.01em; cursor: pointer;
+}
+.brain-icon { font-size: 1.4rem; animation: pulse 3s ease-in-out infinite; }
+
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
+
+.nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+.nav-links a {
+  color: var(--muted); text-decoration: none; font-size: 0.85rem;
+  letter-spacing: 0.04em; text-transform: uppercase; transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.nav-cta {
+  background: var(--accent); color: #0c0d10 !important;
+  padding: 0.5rem 1.2rem; border-radius: 4px;
+  font-weight: 500 !important; font-family: var(--mono);
+  font-size: 0.8rem !important; letter-spacing: 0.02em !important;
+  transition: opacity 0.2s !important; cursor: pointer;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh; display: grid; place-items: center;
+  position: relative; padding: 8rem 2rem 4rem; overflow: hidden;
+}
+.hero-bg { position: absolute; inset: 0; pointer-events: none; }
+.hero-bg .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.18; }
+.orb-1 { width:500px;height:500px;background:#6ef0c0;top:-100px;left:-100px;animation:drift 12s ease-in-out infinite; }
+.orb-2 { width:400px;height:400px;background:#c8f06e;bottom:0;right:-80px;animation:drift 15s ease-in-out infinite reverse; }
+.orb-3 { width:300px;height:300px;background:#f0c06e;top:40%;left:50%;transform:translateX(-50%);animation:drift 10s ease-in-out infinite 3s; }
+
+@keyframes drift {
+  0%,100%{transform:translate(0,0)} 33%{transform:translate(20px,-15px)} 66%{transform:translate(-10px,20px)}
+}
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 100%);
+}
+.hero-content { position:relative;text-align:center;max-width:820px;animation:fadeUp 0.9s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+
+.hero-eyebrow {
+  display:inline-flex;align-items:center;gap:0.5rem;font-family:var(--mono);
+  font-size:0.75rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);
+  border:1px solid rgba(200,240,110,0.25);padding:0.35rem 0.9rem;border-radius:100px;
+  margin-bottom:2rem;animation:fadeUp 0.9s ease 0.1s both;
+}
+.hero-eyebrow::before {
+  content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+h1 {
+  font-family:var(--serif);font-size:clamp(2.8rem,7vw,5.5rem);font-weight:900;
+  line-height:1.05;letter-spacing:-0.02em;margin-bottom:1.5rem;
+  animation:fadeUp 0.9s ease 0.2s both;
+}
+h1 em {
+  font-style:italic;color:var(--accent);position:relative;display:inline-block;
+}
+h1 em::after {
+  content:'';position:absolute;bottom:4px;left:0;right:0;height:3px;
+  background:var(--accent);border-radius:2px;transform:scaleX(0);
+  transform-origin:left;animation:underline-in 0.6s ease 1.2s both;
+}
+@keyframes underline-in { to{transform:scaleX(1)} }
+
+.hero-sub {
+  font-size:1.1rem;line-height:1.7;color:var(--muted);max-width:560px;
+  margin:0 auto 2.5rem;animation:fadeUp 0.9s ease 0.3s both;
+}
+.hero-actions {
+  display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp 0.9s ease 0.4s both;
+}
+
+/* Buttons */
+.btn-primary {
+  background:var(--accent);color:#0c0d10;border:none;padding:0.85rem 2rem;
+  border-radius:6px;font-family:var(--mono);font-size:0.9rem;font-weight:500;
+  cursor:pointer;letter-spacing:0.02em;transition:transform 0.2s,box-shadow 0.2s;
+  box-shadow:0 0 30px rgba(200,240,110,0.2);
+}
+.btn-primary:hover { transform:translateY(-2px);box-shadow:0 0 40px rgba(200,240,110,0.35); }
+
+.btn-secondary {
+  background:transparent;color:var(--text);border:1px solid var(--border);
+  padding:0.85rem 2rem;border-radius:6px;font-family:var(--mono);font-size:0.9rem;
+  cursor:pointer;letter-spacing:0.02em;transition:border-color 0.2s,background 0.2s;
+}
+.btn-secondary:hover { border-color:rgba(255,255,255,0.2);background:var(--surface); }
+
+/* ── WHY ── */
+.why { padding:6rem 2rem;max-width:1100px;margin:0 auto; }
+
+.section-label {
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.15em;
+  text-transform:uppercase;color:var(--accent2);margin-bottom:0.8rem;
+}
+.section-title {
+  font-family:var(--serif);font-size:clamp(1.8rem,4vw,3rem);
+  font-weight:700;line-height:1.2;margin-bottom:1rem;
+}
+.why-grid { display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:3rem; }
+.why-text p { color:var(--muted);line-height:1.8;margin-bottom:1.2rem;font-size:1rem; }
+.why-checks { list-style:none;display:flex;flex-direction:column;gap:0.7rem;margin-top:1.5rem; }
+.why-checks li { display:flex;align-items:center;gap:0.75rem;font-size:0.95rem;color:var(--text); }
+.why-checks li::before {
+  content:'✓';width:22px;height:22px;min-width:22px;background:rgba(200,240,110,0.12);
+  border:1px solid rgba(200,240,110,0.3);border-radius:4px;color:var(--accent);
+  font-size:0.75rem;display:grid;place-items:center;font-weight:700;
+}
+
+/* Chat mockup */
+.chat-mockup { background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.4); }
+.mockup-bar { background:var(--surface2);border-bottom:1px solid var(--border);padding:0.8rem 1.2rem;display:flex;align-items:center;gap:0.5rem; }
+.dot { width:10px;height:10px;border-radius:50%; }
+.dot.r{background:#ff5f56} .dot.y{background:#ffbd2e} .dot.g{background:#27c93f}
+.mockup-title { font-family:var(--mono);font-size:0.75rem;color:var(--muted);margin:0 auto;padding-right:3rem; }
+.mockup-body { padding:1.5rem;display:flex;flex-direction:column;gap:1rem; }
+.msg { display:flex;gap:0.75rem;align-items:flex-start;animation:slideIn 0.4s ease both; }
+@keyframes slideIn { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+.msg.you { flex-direction:row-reverse; }
+.avatar { width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:0.75rem;flex-shrink:0; }
+.avatar.ai { background:linear-gradient(135deg,#6ef0c0,#c8f06e);color:#0c0d10;font-weight:700; }
+.avatar.user { background:var(--surface2);border:1px solid var(--border); }
+.bubble { max-width:80%;padding:0.7rem 1rem;border-radius:12px;font-size:0.82rem;line-height:1.5; }
+.msg.ai .bubble { background:var(--surface2);color:var(--text);border-radius:4px 12px 12px 12px; }
+.msg.you .bubble { background:rgba(200,240,110,0.1);border:1px solid rgba(200,240,110,0.2);color:var(--text);border-radius:12px 4px 12px 12px; }
+.tag-row { display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.5rem; }
+.tag { font-family:var(--mono);font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:4px;letter-spacing:0.04em; }
+.tag.js { background:rgba(200,240,110,0.15);color:var(--accent);border:1px solid rgba(200,240,110,0.2); }
+.tag.cs { background:rgba(110,240,192,0.12);color:var(--accent2);border:1px solid rgba(110,240,192,0.2); }
+.tag.saved { background:rgba(240,192,110,0.12);color:var(--accent3);border:1px solid rgba(240,192,110,0.2); }
+
+/* ── FEATURES ── */
+.features { padding:6rem 2rem;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border); }
+.features-inner { max-width:1100px;margin:0 auto; }
+.features-header { text-align:center;margin-bottom:4rem; }
+.features-grid {
+  display:grid;grid-template-columns:repeat(3,1fr);gap:1.5px;
+  background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;
+}
+.feature-card { background:var(--surface);padding:2.2rem;transition:background 0.25s;position:relative;overflow:hidden; }
+.feature-card:hover { background:var(--surface2); }
+.feature-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--card-accent,var(--accent)),transparent);
+  transform:scaleX(0);transition:transform 0.3s;
+}
+.feature-card:hover::before { transform:scaleX(1); }
+.feature-icon { font-size:1.8rem;margin-bottom:1.2rem;display:block; }
+.feature-card h3 { font-family:var(--serif);font-size:1.1rem;font-weight:700;margin-bottom:0.6rem;color:var(--text); }
+.feature-card p { font-size:0.85rem;line-height:1.7;color:var(--muted); }
+
+/* ── KNOWLEDGE TREE ── */
+.tree-section { padding:6rem 2rem;max-width:1100px;margin:0 auto; }
+.tree-layout { display:grid;grid-template-columns:1fr 1.4fr;gap:4rem;align-items:center;margin-top:3rem; }
+.tree-visual { font-family:var(--mono);font-size:0.88rem;line-height:2;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem; }
+.tree-visual .folder { color:var(--accent3);font-weight:500; }
+.tree-visual .file { color:var(--muted); }
+.tree-visual .file.active { color:var(--accent2); }
+.tree-visual .indent { display:inline-block;width:1.5rem;color:rgba(255,255,255,0.1); }
+.tree-visual .folder-row,.tree-visual .file-row { display:flex;align-items:center;gap:0.4rem;padding:0.1rem 0.3rem;transition:background 0.15s;border-radius:4px;cursor:default; }
+.tree-visual .folder-row:hover,.tree-visual .file-row:hover { background:rgba(255,255,255,0.04); }
+.tree-info { display:flex;flex-direction:column;gap:1.8rem; }
+.tree-point h4 { font-family:var(--serif);font-weight:700;margin-bottom:0.4rem;font-size:1.05rem; }
+.tree-point p { font-size:0.88rem;color:var(--muted);line-height:1.7; }
+.tree-point .label { font-family:var(--mono);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.2rem 0.55rem;border-radius:4px;margin-bottom:0.6rem;display:inline-block; }
+
+/* ── VISION ── */
+.vision { padding:6rem 2rem;background:var(--surface);border-top:1px solid var(--border); }
+.vision-inner { max-width:780px;margin:0 auto;text-align:center; }
+.vision-inner .section-title { margin-bottom:1.2rem; }
+.vision-inner p { color:var(--muted);line-height:1.8;margin-bottom:1rem;font-size:1rem; }
+.vision-cards { display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:3rem;text-align:left; }
+.vision-card { background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:1.5rem;transition:border-color 0.2s; }
+.vision-card:hover { border-color:rgba(255,255,255,0.15); }
+.vision-card .vc-icon { font-size:1.5rem;margin-bottom:0.8rem;display:block; }
+.vision-card h4 { font-family:var(--serif);font-weight:700;font-size:1rem;margin-bottom:0.4rem; }
+.vision-card p { font-size:0.82rem;color:var(--muted);line-height:1.6; }
+
+/* ── CTA ── */
+.cta-section { padding:7rem 2rem;text-align:center;position:relative;overflow:hidden; }
+.cta-section::before {
+  content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:300px;background:radial-gradient(ellipse,rgba(200,240,110,0.08),transparent 70%);pointer-events:none;
+}
+.cta-section h2 { font-family:var(--serif);font-size:clamp(2rem,5vw,3.5rem);font-weight:900;margin-bottom:1rem; }
+.cta-section p { color:var(--muted);margin-bottom:2.5rem;font-size:1rem; }
+.cta-input {
+  flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:0.85rem 1.2rem;border-radius:6px;font-family:var(--mono);
+  font-size:0.85rem;outline:none;transition:border-color 0.2s;
+}
+.cta-input:focus { border-color:rgba(200,240,110,0.4); }
+#join-msg { margin-top:1rem;font-family:var(--mono);font-size:0.8rem;color:var(--accent);opacity:0;transition:opacity 0.4s;height:1.2rem; }
+
+/* ── FOOTER ── */
+footer {
+  border-top:1px solid var(--border);padding:2rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+}
+footer .logo-sm { font-family:var(--serif);font-size:1rem;font-weight:700;display:flex;align-items:center;gap:0.4rem; }
+footer p { font-family:var(--mono);font-size:0.72rem;color:var(--muted);letter-spacing:0.04em; }
+
+/* ── REVEAL ── */
+.reveal { opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease; }
+.reveal.visible { opacity:1;transform:translateY(0); }
+
+/* ══════════════════════════════════════════
+   APP SCREEN
+══════════════════════════════════════════ */
+#app-screen {
+  display: none;
+  flex-direction: row;
+  height: 100vh;
+  overflow: hidden;
+}
+#app-screen.active { display: flex; }
+
+/* SIDEBAR */
+.app-sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 1.4rem 1.4rem 1rem;
+  font-family: var(--serif); font-size: 1.1rem; font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.sidebar-nav { display: flex; flex-direction: column; gap: 0.25rem; padding: 1rem 0.75rem; flex: 1; }
+
+.nav-btn {
+  display: flex; align-items: center; gap: 0.65rem;
+  width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px;
+  background: transparent; border: none; color: var(--muted);
+  font-family: var(--sans); font-size: 0.875rem; font-weight: 400;
+  cursor: pointer; text-align: left; transition: background 0.15s, color 0.15s;
+}
+.nav-btn .nav-icon { font-size: 1rem; width: 1.2rem; text-align: center; }
+.nav-btn:hover { background: var(--surface2); color: var(--text); }
+.nav-btn.active { background: rgba(200,240,110,0.1); color: var(--accent); font-weight: 500; }
+
+.sidebar-footer {
+  padding: 1rem 0.75rem;
+  border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 0.25rem;
+}
+
+.theme-btn {
+  display: flex; align-items: center; gap: 0.65rem;
+  width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px;
+  background: transparent; border: none; color: var(--muted);
+  font-family: var(--mono); font-size: 0.75rem; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.theme-btn:hover { background: var(--surface2); color: var(--text); }
+
+.back-btn {
+  display: flex; align-items: center; gap: 0.65rem;
+  width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px;
+  background: transparent; border: none; color: var(--muted);
+  font-family: var(--mono); font-size: 0.75rem; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.back-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* MAIN AREA */
+.app-main {
+  flex: 1; overflow-y: auto; padding: 2.5rem;
+  display: flex; flex-direction: column; gap: 0;
+}
+
+.app-view { display: none; flex-direction: column; gap: 2rem; }
+.app-view.active { display: flex; }
+
+/* Dashboard */
+.app-header { display: flex; flex-direction: column; gap: 0.3rem; }
+.app-header h2 { font-family: var(--serif); font-size: 1.8rem; font-weight: 700; }
+.app-header p { color: var(--muted); font-size: 0.875rem; }
+
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: rgba(255,255,255,0.15); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent)), transparent);
+}
+.stat-label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.stat-value { font-family: var(--serif); font-size: 2.8rem; font-weight: 900; line-height: 1; color: var(--text); }
+
+.recent-section h3 { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+
+.recent-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.recent-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1rem 1.2rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.recent-item:hover { background: var(--surface2); border-color: rgba(255,255,255,0.1); }
+.recent-item-left { display: flex; flex-direction: column; gap: 0.25rem; }
+.recent-item-title { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+.recent-item-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+.recent-item-tag {
+  font-family: var(--mono); font-size: 0.65rem; padding: 0.2rem 0.55rem;
+  border-radius: 4px; background: rgba(200,240,110,0.1);
+  color: var(--accent); border: 1px solid rgba(200,240,110,0.2);
+}
+
+/* Chats View */
+.section-top { display: flex; align-items: center; justify-content: space-between; }
+
+.input-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.app-input, .app-textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  padding: 0.7rem 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+}
+.app-input:focus, .app-textarea:focus { border-color: rgba(200,240,110,0.35); }
+.app-input::placeholder, .app-textarea::placeholder { color: var(--muted); }
+.app-textarea { min-height: 90px; }
+
+.search-bar {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  padding: 0.7rem 1rem 0.7rem 2.5rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-bar:focus { border-color: rgba(200,240,110,0.35); }
+.search-wrap { position: relative; }
+.search-icon { position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 0.9rem; pointer-events: none; }
+
+.chat-list { display: flex; flex-direction: column; gap: 0.6rem; }
+
+.chat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  transition: background 0.15s, border-color 0.2s;
+  cursor: default;
+}
+.chat-card:hover { background: var(--surface2); border-color: rgba(255,255,255,0.12); }
+
+.chat-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+.chat-card-title { font-family: var(--serif); font-size: 1rem; font-weight: 700; color: var(--text); }
+.chat-card-badges { display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; }
+.chat-card-body { font-size: 0.82rem; line-height: 1.65; color: var(--muted); margin-bottom: 0.75rem; }
+.chat-card-footer { display: flex; align-items: center; justify-content: space-between; }
+
+.chip {
+  font-family: var(--mono); font-size: 0.65rem; padding: 0.2rem 0.55rem; border-radius: 4px;
+  background: rgba(110,240,192,0.1); color: var(--accent2); border: 1px solid rgba(110,240,192,0.2);
+}
+
+.icon-btn {
+  background: transparent; border: none; color: var(--muted);
+  cursor: pointer; font-size: 1rem; padding: 0.2rem; transition: color 0.15s; line-height: 1;
+}
+.icon-btn:hover { color: var(--text); }
+.icon-btn.pinned { color: var(--accent3); }
+.icon-btn.fav { color: var(--accent); }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; padding: 4rem 2rem; text-align: center; }
+.empty-icon { font-size: 2.5rem; opacity: 0.4; }
+.empty-state p { color: var(--muted); font-size: 0.875rem; }
+
+/* Analysis */
+.analysis-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.analysis-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; }
+.analysis-card h4 { font-family: var(--serif); font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+.analysis-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+.analysis-card .big { font-size: 2.2rem; font-family: var(--serif); font-weight: 900; color: var(--accent); margin: 0.5rem 0; }
+
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.tag-cloud span {
+  font-family: var(--mono); font-size: 0.72rem; padding: 0.25rem 0.6rem; border-radius: 4px;
+  border: 1px solid var(--border); color: var(--muted); transition: all 0.15s;
+}
+.tag-cloud span:hover { border-color: rgba(200,240,110,0.3); color: var(--accent); background: rgba(200,240,110,0.05); }
+
+/* Light theme */
+body.light {
+  --bg: #f4f5f0;
+  --surface: #ffffff;
+  --surface2: #eff0ec;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1c22;
+  --muted: #6b7080;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  nav { padding: 1rem 1.2rem; }
+  .nav-links { display: none; }
+  .why-grid, .tree-layout { grid-template-columns: 1fr; }
+  .features-grid { grid-template-columns: 1fr; }
+  .vision-cards { grid-template-columns: 1fr; }
+  footer { flex-direction: column; gap: 0.8rem; text-align: center; }
+  .stats-row { grid-template-columns: 1fr; }
+  .input-row { grid-template-columns: 1fr; }
+  .analysis-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LANDING PAGE SCREEN
+══════════════════════════════════════════ -->
+<div id="landing-screen" class="screen active">
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="goToLanding()">
+    <span class="brain-icon">🧠</span> MindShelf
+  </div>
+  <ul class="nav-links">
+    <li><a href="#why">Why</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#vision">Vision</a></li>
+    <li><a href="#cta" class="nav-cta">Get Early Access</a></li>
+  </ul>
+  <button class="btn-primary" style="display:none" id="nav-launch-btn" onclick="launchApp()">Launch App →</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="hero-grid"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Personal Knowledge Management</div>
+    <h1>Turn scattered chats into<br/><em>structured knowledge</em></h1>
+    <p class="hero-sub">MindShelf organizes your AI conversations into a searchable, structured, and actionable second brain — so nothing valuable ever gets lost again.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="launchApp()">Launch App →</button>
+      <button class="btn-secondary" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">See Features</button>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="why" id="why">
+  <div class="why-grid">
+    <div class="why-text reveal">
+      <div class="section-label">The Problem</div>
+      <h2 class="section-title">Most AI insights disappear<br/>into the void.</h2>
+      <p>You ask great questions, get valuable answers, and then lose them in endless scrolling chat history. The knowledge was right there — and now it's gone.</p>
+      <p>MindShelf solves that by giving every conversation a home — organized, tagged, searchable, and connected to your goals.</p>
+      <ul class="why-checks">
+        <li>Organize chats by topic and category</li>
+        <li>Save important insights in one place</li>
+        <li>Search past ideas instantly</li>
+        <li>Build a personal knowledge system</li>
+        <li>Turn knowledge into consistent action</li>
+        <li>Learn without overwhelm or info overload</li>
+      </ul>
+    </div>
+    <div class="chat-mockup reveal" style="transition-delay:0.15s">
+      <div class="mockup-bar">
+        <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        <span class="mockup-title">MindShelf — Programming / JavaScript</span>
+      </div>
+      <div class="mockup-body">
+        <div class="msg you">
+          <div class="avatar user">👤</div>
+          <div class="bubble">How does event delegation work in JavaScript?</div>
+        </div>
+        <div class="msg ai">
+          <div class="avatar ai">MS</div>
+          <div class="bubble">
+            Event delegation lets you attach a single listener to a parent element to catch events from its children — even ones added dynamically. It works because events bubble up the DOM.
+            <div class="tag-row">
+              <span class="tag js">JavaScript</span>
+              <span class="tag cs">DOM</span>
+              <span class="tag saved">💾 Saved</span>
+            </div>
+          </div>
+        </div>
+        <div class="msg you">
+          <div class="avatar user">👤</div>
+          <div class="bubble">Save this to my JS fundamentals shelf</div>
+        </div>
+        <div class="msg ai">
+          <div class="avatar ai">MS</div>
+          <div class="bubble">✓ Added to <strong>Programming → JavaScript → DOM</strong>. You now have 14 insights saved in that topic.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="features-inner">
+    <div class="features-header reveal">
+      <div class="section-label">What MindShelf Does</div>
+      <h2 class="section-title">Everything your second brain needs</h2>
+    </div>
+    <div class="features-grid reveal" style="transition-delay:0.1s">
+      <div class="feature-card" style="--card-accent:#c8f06e"><span class="feature-icon">📂</span><h3>Organized Chat History</h3><p>Group conversations by topics, categories, goals, projects, importance, and custom tags.</p></div>
+      <div class="feature-card" style="--card-accent:#6ef0c0"><span class="feature-icon">🔍</span><h3>Instant Search</h3><p>Find any insight from any conversation in seconds. Full-text search across all your saved knowledge.</p></div>
+      <div class="feature-card" style="--card-accent:#f0c06e"><span class="feature-icon">🎯</span><h3>Goal Alignment</h3><p>Link your knowledge directly to your goals and projects. Know exactly why you saved something.</p></div>
+      <div class="feature-card" style="--card-accent:#c8f06e"><span class="feature-icon">🧩</span><h3>Knowledge Connections</h3><p>Discover relationships between ideas across different topics.</p></div>
+      <div class="feature-card" style="--card-accent:#6ef0c0"><span class="feature-icon">📈</span><h3>Learning Insights</h3><p>Understand your learning patterns — what topics you explore most and where there are gaps.</p></div>
+      <div class="feature-card" style="--card-accent:#f0c06e"><span class="feature-icon">⚡</span><h3>Action System</h3><p>Convert insights into action items and habits. Bridge the gap between knowing and doing.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- KNOWLEDGE TREE -->
+<section class="tree-section">
+  <div class="tree-layout">
+    <div class="tree-visual reveal">
+      <div class="folder-row"><span class="folder">📁 Programming</span></div>
+      <div class="file-row"><span class="indent">├─</span><span class="folder">📁 HTML</span></div>
+      <div class="file-row"><span class="indent">│ </span><span class="indent">├─</span><span class="file active">📄 semantic-tags.md</span></div>
+      <div class="file-row"><span class="indent">│ </span><span class="indent">└─</span><span class="file">📄 accessibility.md</span></div>
+      <div class="file-row"><span class="indent">├─</span><span class="folder">📁 CSS</span></div>
+      <div class="file-row"><span class="indent">│ </span><span class="indent">├─</span><span class="file">📄 flexbox-guide.md</span></div>
+      <div class="file-row"><span class="indent">│ </span><span class="indent">└─</span><span class="file">📄 css-variables.md</span></div>
+      <div class="file-row"><span class="indent">└─</span><span class="folder">📁 JavaScript</span></div>
+      <div class="file-row"><span class="indent">  </span><span class="indent">├─</span><span class="file active">📄 event-delegation.md</span></div>
+      <div class="file-row"><span class="indent">  </span><span class="indent">└─</span><span class="file">📄 promises.md</span></div>
+      <br/>
+      <div class="folder-row"><span class="folder">📁 Self Improvement</span></div>
+      <div class="file-row"><span class="indent">├─</span><span class="folder">📁 Productivity</span></div>
+      <div class="file-row"><span class="indent">└─</span><span class="folder">📁 Habits</span></div>
+    </div>
+    <div class="tree-info reveal" style="transition-delay:0.15s">
+      <div class="section-label">Knowledge Structure</div>
+      <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2.4rem)">Your mind,<br/>beautifully organized</h2>
+      <div class="tree-point">
+        <span class="label" style="background:rgba(200,240,110,0.1);color:var(--accent);border:1px solid rgba(200,240,110,0.2)">Hierarchy</span>
+        <h4>Nested Topics & Categories</h4>
+        <p>Build deep, meaningful hierarchies that mirror how you actually think — not flat lists that become impossible to navigate.</p>
+      </div>
+      <div class="tree-point">
+        <span class="label" style="background:rgba(110,240,192,0.1);color:var(--accent2);border:1px solid rgba(110,240,192,0.2)">Tagging</span>
+        <h4>Cross-cutting Tags</h4>
+        <p>Add tags to surface the same insight across multiple contexts. One note can live in JavaScript and Async Patterns simultaneously.</p>
+      </div>
+      <div class="tree-point">
+        <span class="label" style="background:rgba(240,192,110,0.1);color:var(--accent3);border:1px solid rgba(240,192,110,0.2)">Context</span>
+        <h4>Rich Metadata</h4>
+        <p>Every saved insight carries context: source, date, goal link, and related ideas. Your knowledge grows richer over time, not noisier.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VISION -->
+<section class="vision" id="vision">
+  <div class="vision-inner">
+    <div class="reveal">
+      <div class="section-label">The Long Game</div>
+      <h2 class="section-title">A system that learns<br/>as you learn</h2>
+      <p>MindShelf's long-term vision is an intelligent second brain that understands your goals, detects your learning patterns, and guides you toward what matters most.</p>
+      <p>Imagine a system that remembers your ideas better than you do — and knows exactly what to show you next.</p>
+    </div>
+    <div class="vision-cards reveal" style="transition-delay:0.1s">
+      <div class="vision-card"><span class="vc-icon">🎯</span><h4>Understands Your Goals</h4><p>Every insight is connected to what you're trying to achieve, not just what you searched for.</p></div>
+      <div class="vision-card"><span class="vc-icon">🔮</span><h4>Predicts What's Next</h4><p>Based on your learning journey, MindShelf recommends what to explore before you even ask.</p></div>
+      <div class="vision-card"><span class="vc-icon">🌡️</span><h4>Prevents Overwhelm</h4><p>Smart pacing and burnout detection keeps learning sustainable and consistently rewarding.</p></div>
+      <div class="vision-card"><span class="vc-icon">⚙️</span><h4>Auto-organizes</h4><p>AI-powered categorization means your knowledge shelf stays tidy without constant manual work.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="reveal">
+    <div class="section-label" style="justify-content:center;display:flex">Early Access</div>
+    <h2>Ready to build your<br/>second brain?</h2>
+    <p>Join the waitlist and be among the first to experience MindShelf.</p>
+    <div style="display:flex;gap:0.8rem;justify-content:center;align-items:center;flex-wrap:wrap;max-width:440px;margin:0 auto">
+      <input type="email" placeholder="your@email.com" id="email-input" class="cta-input" onkeydown="if(event.key==='Enter')handleJoin()"/>
+      <button class="btn-primary" onclick="handleJoin()" style="white-space:nowrap">Join Waitlist</button>
+    </div>
+    <p id="join-msg">✓ You're on the list! We'll be in touch.</p>
+    <div style="margin-top:2rem">
+      <button class="btn-secondary" onclick="launchApp()">Or try the app now →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo-sm">🧠 MindShelf</div>
+  <p>© 2025 MindShelf. Your second brain, structured.</p>
+</footer>
+
+</div><!-- /landing-screen -->
+
+
+<!-- ══════════════════════════════════════════
+     APP SCREEN
+══════════════════════════════════════════ -->
+<div id="app-screen" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside class="app-sidebar">
+    <div class="sidebar-brand" onclick="goToLanding()">
+      <span>🧠</span> MindShelf
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" onclick="setView('dashboard', this)">
+        <span class="nav-icon">⊞</span> Dashboard
+      </button>
+      <button class="nav-btn" onclick="setView('chats', this)">
+        <span class="nav-icon">💬</span> Chats
+      </button>
+      <button class="nav-btn" onclick="setView('favorites', this)">
+        <span class="nav-icon">★</span> Favorites
+      </button>
+      <button class="nav-btn" onclick="setView('analysis', this)">
+        <span class="nav-icon">📈</span> Behavior
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="theme-btn" onclick="toggleTheme()">🌗 Toggle Theme</button>
+      <button class="back-btn" onclick="goToLanding()">← Back to Home</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="app-main">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="app-view active">
+      <div class="app-header">
+        <h2>Dashboard</h2>
+        <p>Your knowledge at a glance.</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card" style="--card-accent:#c8f06e">
+          <div class="stat-label">Total Chats</div>
+          <div class="stat-value" id="totalChats">0</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#6ef0c0">
+          <div class="stat-label">Pinned</div>
+          <div class="stat-value" id="totalPinned">0</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#f0c06e">
+          <div class="stat-label">Tags Used</div>
+          <div class="stat-value" id="totalCategories">0</div>
+        </div>
+      </div>
+
+      <div class="recent-section">
+        <h3>Recent Chats</h3>
+        <div class="recent-list" id="recentList">
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>No chats yet. Head to Chats to add your first insight.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHATS -->
+    <div id="view-chats" class="app-view">
+      <div class="app-header">
+        <h2>Chats</h2>
+        <p>Save and organize your insights.</p>
+      </div>
+
+      <div class="input-panel">
+        <div class="input-row">
+          <input class="app-input" id="chatTitle" placeholder="Chat title…"/>
+          <input class="app-input" id="chatTag" placeholder="Tag (AI, Career, JS…)"/>
+        </div>
+        <textarea class="app-textarea" id="chatContent" placeholder="Write your insight or paste a chat excerpt…"></textarea>
+        <div>
+          <button class="btn-primary" onclick="addChat()" style="padding:0.65rem 1.6rem;font-size:0.85rem">+ Add Chat</button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-bar" id="search" placeholder="Search chats…" oninput="renderChats()"/>
+      </div>
+
+      <div class="chat-list" id="chatList"></div>
+    </div>
+
+    <!-- FAVORITES -->
+    <div id="view-favorites" class="app-view">
+      <div class="app-header">
+        <h2>Favorites</h2>
+        <p>Your starred insights, all in one place.</p>
+      </div>
+      <div class="chat-list" id="favoriteList"></div>
+    </div>
+
+    <!-- ANALYSIS -->
+    <div id="view-analysis" class="app-view">
+      <div class="app-header">
+        <h2>Behavior Analysis</h2>
+        <p>Understand your learning patterns.</p>
+      </div>
+      <div id="analysisBox"></div>
+    </div>
+
+  </main>
+</div><!-- /app-screen -->
+
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────
+let chats = JSON.parse(localStorage.getItem('ms_chats') || '[]');
+let lightTheme = false;
+
+// ── SCREEN ROUTING ─────────────────────────────────────────────────
+function launchApp() {
+  document.getElementById('landing-screen').classList.remove('active');
+  const app = document.getElementById('app-screen');
+  app.classList.add('active');
+  refreshAll();
+}
+
+function goToLanding() {
+  document.getElementById('app-screen').classList.remove('active');
+  document.getElementById('landing-screen').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── APP VIEWS ──────────────────────────────────────────────────────
+function setView(name, btn) {
+  document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  refreshAll();
+}
+
+// ── THEME ──────────────────────────────────────────────────────────
+function toggleTheme() {
+  lightTheme = !lightTheme;
+  document.body.classList.toggle('light', lightTheme);
+}
+
+// ── CHAT CRUD ──────────────────────────────────────────────────────
+function addChat() {
+  const title = document.getElementById('chatTitle').value.trim();
+  const tag   = document.getElementById('chatTag').value.trim();
+  const body  = document.getElementById('chatContent').value.trim();
+  if (!title) { document.getElementById('chatTitle').focus(); return; }
+
+  chats.unshift({ id: Date.now(), title, tag: tag || 'General', body, pinned: false, fav: false, date: new Date().toLocaleDateString() });
+  save();
+  document.getElementById('chatTitle').value = '';
+  document.getElementById('chatTag').value = '';
+  document.getElementById('chatContent').value = '';
+  refreshAll();
+}
+
+function togglePin(id) {
+  const c = chats.find(x => x.id === id);
+  if (c) { c.pinned = !c.pinned; save(); refreshAll(); }
+}
+
+function toggleFav(id) {
+  const c = chats.find(x => x.id === id);
+  if (c) { c.fav = !c.fav; save(); refreshAll(); }
+}
+
+function deleteChat(id) {
+  chats = chats.filter(x => x.id !== id);
+  save();
+  refreshAll();
+}
+
+function save() {
+  localStorage.setItem('ms_chats', JSON.stringify(chats));
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────
+function chatCard(c, showDelete = true) {
+  return `
+    <div class="chat-card" id="card-${c.id}">
+      <div class="chat-card-header">
+        <div class="chat-card-title">${esc(c.title)}</div>
+        <div class="chat-card-badges">
+          <button class="icon-btn ${c.pinned ? 'pinned' : ''}" onclick="togglePin(${c.id})" title="${c.pinned ? 'Unpin' : 'Pin'}">${c.pinned ? '📌' : '📍'}</button>
+          <button class="icon-btn ${c.fav ? 'fav' : ''}" onclick="toggleFav(${c.id})" title="${c.fav ? 'Unfav' : 'Favorite'}">${c.fav ? '★' : '☆'}</button>
+          ${showDelete ? `<button class="icon-btn" onclick="deleteChat(${c.id})" title="Delete">✕</button>` : ''}
+        </div>
+      </div>
+      ${c.body ? `<div class="chat-card-body">${esc(c.body).substring(0, 220)}${c.body.length > 220 ? '…' : ''}</div>` : ''}
+      <div class="chat-card-footer">
+        <span class="chip">${esc(c.tag)}</span>
+        <span style="font-family:var(--mono);font-size:0.68rem;color:var(--muted)">${c.date}</span>
+      </div>
+    </div>`;
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderChats() {
+  const q = (document.getElementById('search')?.value || '').toLowerCase();
+  const filtered = chats.filter(c =>
+    c.title.toLowerCase().includes(q) ||
+    c.tag.toLowerCase().includes(q) ||
+    (c.body || '').toLowerCase().includes(q)
+  );
+  const el = document.getElementById('chatList');
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><p>No chats match your search.</p></div>`;
+    return;
+  }
+  el.innerHTML = filtered.map(c => chatCard(c)).join('');
+}
+
+function renderFavorites() {
+  const favs = chats.filter(c => c.fav);
+  const el = document.getElementById('favoriteList');
+  if (!el) return;
+  if (!favs.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">☆</div><p>No favorites yet. Star a chat to save it here.</p></div>`;
+    return;
+  }
+  el.innerHTML = favs.map(c => chatCard(c, false)).join('');
+}
+
+function renderDashboard() {
+  document.getElementById('totalChats').textContent = chats.length;
+  document.getElementById('totalPinned').textContent = chats.filter(c => c.pinned).length;
+  const tags = [...new Set(chats.map(c => c.tag))];
+  document.getElementById('totalCategories').textContent = tags.length;
+
+  const recent = chats.slice(0, 5);
+  const el = document.getElementById('recentList');
+  if (!el) return;
+  if (!recent.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>No chats yet. Head to Chats to add your first insight.</p></div>`;
+    return;
+  }
+  el.innerHTML = recent.map(c => `
+    <div class="recent-item" onclick="setView('chats', document.querySelectorAll('.nav-btn')[1])">
+      <div class="recent-item-left">
+        <div class="recent-item-title">${esc(c.title)}</div>
+        <div class="recent-item-meta">${c.date}</div>
+      </div>
+      <span class="recent-item-tag">${esc(c.tag)}</span>
+    </div>`).join('');
+}
+
+function renderAnalysis() {
+  const el = document.getElementById('analysisBox');
+  if (!el) return;
+  if (!chats.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><p>Add some chats first to see your behavior analysis.</p></div>`;
+    return;
+  }
+
+  const tags = {};
+  chats.forEach(c => { tags[c.tag] = (tags[c.tag] || 0) + 1; });
+  const topTag = Object.entries(tags).sort((a,b) => b[1]-a[1])[0];
+
+  el.innerHTML = `
+    <div class="analysis-cards">
+      <div class="analysis-card">
+        <h4>Total Knowledge Saved</h4>
+        <div class="big">${chats.length}</div>
+        <p>Insights captured across all your topics and categories.</p>
+      </div>
+      <div class="analysis-card">
+        <h4>Top Topic</h4>
+        <div class="big" style="color:var(--accent2)">${topTag ? esc(topTag[0]) : '–'}</div>
+        <p>${topTag ? `${topTag[1]} chat${topTag[1] > 1 ? 's' : ''} saved under this tag.` : 'Add some chats to discover your top topic.'}</p>
+      </div>
+      <div class="analysis-card">
+        <h4>Pinned Insights</h4>
+        <div class="big" style="color:var(--accent3)">${chats.filter(c => c.pinned).length}</div>
+        <p>Insights you've marked as high-priority or essential reference.</p>
+      </div>
+      <div class="analysis-card">
+        <h4>All Tags</h4>
+        <div class="tag-cloud">
+          ${Object.entries(tags).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<span>${esc(t)} <strong>${n}</strong></span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function refreshAll() {
+  renderChats();
+  renderFavorites();
+  renderDashboard();
+  renderAnalysis();
+}
+
+// ── LANDING JS ─────────────────────────────────────────────────────
+function handleJoin() {
+  const input = document.getElementById('email-input');
+  const msg = document.getElementById('join-msg');
+  if (input.value && input.value.includes('@')) {
+    msg.style.opacity = '1';
+    input.value = '';
+    setTimeout(() => { msg.style.opacity = '0'; }, 4000);
+  } else {
+    input.style.borderColor = 'rgba(255,80,80,0.5)';
+    input.placeholder = 'Enter a valid email';
+    setTimeout(() => {
+      input.style.borderColor = 'var(--border)';
+      input.placeholder = 'your@email.com';
+    }, 2000);
+  }
+}
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Initial render
+refreshAll();
+</script>
+</body>
+</html>
+
